@@ -1,5 +1,13 @@
 #include <stdio.h>
 
+void idsSearch(){
+
+}
+
+void aSearch(){
+
+}
+
 int main(){
 	int choice;
 	do	{
