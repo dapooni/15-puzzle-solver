@@ -1,11 +1,11 @@
 #include <stdio.h>
 
 void idsSearch(){
-
+	//code here
 }
 
 void aSearch(){
-
+	//code here
 }
 
 int main(){
