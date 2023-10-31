@@ -26,8 +26,34 @@ typedef struct Node {
     struct Node* next; //a pointer to the next node
 } Node;
 
+//function to print the current configuration of the sliding puzzle.
+void printBoard(PuzzleState state){
+    int i, j;  //loop counters for rows and columns.
+    //print a label indicating that this is the initial state.
+	printf("\t\t\t    Initial State\t");
+    //print the top border of the table.
+	printf("\n\t\t    -----------------------------\n");
+
+    //loop through each row of the puzzle.
+    for (i = 0; i < 4; i++) {
+        //start a new row with a vertical border.
+		printf("\t\t    |");
+
+        //loop through each column of the current row.
+        for (j = 0; j < 4; j++) 
+        {
+            //print the value in the current cell, right-aligned in a width of 4 spaces.
+            printf(" %4d |", state.board[i][j]);
+        }
+
+        //print the bottom border of the current row.
+        printf("\n\t\t    -----------------------------\n");
+    }
+}
 //determine if a move to a specific position is valid (within the bounds of the board)
 int isValidMove(int x, int y) {
+    // printf("%d", x);
+    // printf("%d", y);
     if (x < 0 || x >= SIZE || y < 0 || y >= SIZE)
         return 0;  // False: The position is outside the grid boundaries
     return 1;      // True: The position is inside the grid boundaries
@@ -37,6 +63,7 @@ int isValidMove(int x, int y) {
 Node* generateSuccessor(Node* currNode, char move) {
     int dx = 0, dy = 0;
     
+    // printf("%c", move);
     //switch statement to determine the direction of movement based on the 'move' character.
     switch (move) {
         case 'U': dx = -1; break; //if move is 'U', set dx to -1 to move one row up.
@@ -44,20 +71,21 @@ Node* generateSuccessor(Node* currNode, char move) {
         case 'L': dy = -1; break; //if move is 'L', set dy to -1 to move one column to the left.
         case 'R': dy = 1; break;  //if move is 'R', set dy to 1 to move one column to the right.
     }
+
     int newX = currNode->state.x + dx; //compute the new x (row) position for the empty slot by adding dx to the current x position.
     int newY = currNode->state.y + dy; //compute the new y (column) position for the empty slot by adding dy to the current y position.
-
 //check if the attempted move (resulting in newX, newY) is within the valid bounds of the board
+    // printf("x: %d\n", dx);
+    // printf("y: %d\n", dy);
     if (isValidMove(newX, newY)) {
         PuzzleState newState = currNode->state; 	//copy the current state to create a new modified state
         newState.board[currNode->state.x][currNode->state.y] = newState.board[newX][newY]; //swap the empty slot with the adjacent slot based on the move
 		newState.board[newX][newY] = 0; 	//set the moved tile's value to empty, completing the swap
         
-		//update the x and y coordinates in the new state to represent the new empty slot's position
-		newState.x = newX;
+		newState.x = newX; //update the x and y coordinates in the new state to represent the new empty slot's position
         newState.y = newY;
 		
-        Node* newNode = malloc(sizeof(Node)); 	//allocate memory for a new node to represent the new state in search tree/path
+        Node* newNode = malloc(sizeof(Node)); //allocate memory for a new node to represent the new state in search tree/path
 		newNode->state = newState; //set the new node's state to the modified state
 		newNode->parent = currNode; //link the new node to its parent (the node/state from which it was generated)
 		newNode->action = move; //record the action/move ('U', 'D', 'L', 'R') that was used to generate this new state
@@ -99,23 +127,19 @@ int heuristic(PuzzleState state){
 
 bool isGoalState(PuzzleState state)  //checks if the given puzzle state is the goal state
 {
-    int value = 1; //used to check if the tiles in the puzzle are in the correct ascending order.
+    int value = 0; //used to check if the tiles in the puzzle are in the correct ascending order.
     int i, j;
     
     //nested for-loop to iterate through each tile in the puzzle.
     for (i = 0; i < SIZE; i++) {
         for (j = 0; j < SIZE; j++) {
 			//check if the current tile is the last tile in the puzzle.
-            if (i == SIZE - 1 && j == SIZE - 1) {
+            if (state.board[i][j]!=value) {
 				//if the last tile is not the empty slot (value 0), the puzzle state is not the goal state. Return false.
                 if (state.board[i][j] != 0) 
 				return false;
             } 
-			else {
-				//check if the tile's value matches the expected value in the ascending order
-                if (state.board[i][j] != value++)
-				return false;
-            }
+			value++;
         }
     }
     return true; //return true, indicating that the puzzle state is the goal state.
@@ -131,8 +155,7 @@ void IDS(PuzzleState initial) {
     int searchCost = 0;  //initialize the search cost (number of nodes expanded).
     int i, depth;  //declare loop counter i and search depth.
     
-    //possible moves: Up, Down, Left, Right.
-    char moves[4] = {'U', 'D', 'L', 'R'};
+    char moves[4] = {'U', 'D', 'L', 'R'}; //possible moves: Up, Down, Left, Right.
 
     //iterate over increasing depths up to a maximum defined depth (MAX_DEPTH).
     for (depth = 0; depth < MAX_DEPTH; depth++) {
@@ -155,7 +178,7 @@ void IDS(PuzzleState initial) {
             Node* currNode = stack[top--]; //pop the current node from the stack.
             
             //if the current node's state is the goal state.
-            if (isGoalState(currNode->state)) { //code works properly
+            if (isGoalState(currNode->state)) { 
                 end = clock();  //capture the end time.
                 double time_taken = ((double)end - start) / CLOCKS_PER_SEC;
 
@@ -168,7 +191,8 @@ void IDS(PuzzleState initial) {
 
                 printf("Solution cost: %d\n", depth);
                 printf("Search cost: %d\n", searchCost);
-                printf("Running time: %f seconds\n", time_taken);
+                printf("Running time: %f seconds\n\n", time_taken);
+                printBoard(currNode->state);
                 return;
             }
             
@@ -247,6 +271,7 @@ void AStar(PuzzleState initial) {
             printf("Solution cost: %d\n", currNode->cost);
             printf("Search cost: %d\n", searchCost);
             printf("Running time: %f seconds\n", time_taken);
+            printBoard(currNode->state);
             return;
         }
 
@@ -274,30 +299,7 @@ void AStar(PuzzleState initial) {
     printf("No solution found.\n");
 }
 
-//function to print the current configuration of the sliding puzzle.
-void printTable(PuzzleState state){
-    int i, j;  //loop counters for rows and columns.
-    //print a label indicating that this is the initial state.
-    printf("       \t\t\t\t\t\tInitial State\t    ");
-    //print the top border of the table.
-    printf("\n       \t\t\t\t\t-----------------------------\n");
 
-    //loop through each row of the puzzle.
-    for (i = 0; i < 4; i++) {
-        //start a new row with a vertical border.
-        printf("       \t\t\t\t\t|");
-
-        //loop through each column of the current row.
-        for (j = 0; j < 4; j++) 
-        {
-            //print the value in the current cell, right-aligned in a width of 4 spaces.
-            printf(" %4d |", state.board[i][j]);
-        }
-
-        //print the bottom border of the current row.
-        printf("\n       \t\t\t\t\t-----------------------------\n");
-    }
-}
 
 //function to configure the sliding puzzle's board based on user input.
 PuzzleState configureBoard(PuzzleState state){
@@ -307,7 +309,7 @@ PuzzleState configureBoard(PuzzleState state){
     printf("Input initial board configuration numbers below:\n");
     
     //display the current configuration of the board using the printTable function.
-    printTable(state); 
+    printBoard(state); 
 
     //prompt the user to input numbers from 0 to 15 for each cell of the board.
     printf("\nEnter 0-15 numbers (with spaces) to fill the board:\n");
@@ -326,7 +328,7 @@ PuzzleState configureBoard(PuzzleState state){
     system("cls||clear");
 
     //display the newly configured board to the user.
-    printTable(state);
+    printBoard(state);
 
     //return the updated PuzzleState structure with the new configuration.
     return state;
@@ -379,17 +381,17 @@ int main() {
  
     do	{
 		//system("cls||clear");   //this function is used to run system/command prompt commands and here cls is a command to clear the output screen for both windows and linux
-		printTable(initial);
-        printf("\t\t\t-------------------------------------------------------------------\n");
-		printf("\t\t\t|\t\t          AI SEARCH STRATEGIES         \t\t|\n");
-		printf("\t\t\t-------------------------------------------------------------------\n");
-		printf("\t\t\t|\t\t\t\t\t\t\t\t  |\n");
-		printf("\t\t\t|0.) Modify Board  \t\t\t\t\t\t  |\n");
-		printf("\t\t\t|1.) Iterative Deepening Search \t\t\t\t  |\n");
-		printf("\t\t\t|2.) A* search\t\t\t\t\t\t\t  |\n");
-		printf("\t\t\t|3.) End Program \t\t\t\t\t\t  |\n");
-		printf("\t\t\t-------------------------------------------------------------------\n");
-        
+		printf("-----------------------------------------------------------------\n");
+		printf("|\t\t          15-PUZZLE SOLVER          \t\t|\n");
+		printf("-----------------------------------------------------------------\n");
+		printBoard(initial);
+		printf("-----------------------------------------------------------------\n");
+		printf("|0.) Modify Board  \t\t\t\t\t\t|\n");
+		printf("|1.) Iterative Deepening Search \t\t\t\t|\n");
+		printf("|2.) A* search\t\t\t\t\t\t\t|\n");
+		printf("|3.) End Program \t\t\t\t\t\t|\n");
+		printf("-----------------------------------------------------------------\n");
+		
 		printf("\nEnter your number choice: ");
 		scanf("%d", &choice); 
 			
@@ -401,13 +403,13 @@ int main() {
 			case 1:
 				system("cls||clear");
                 IDS(initial);
-                printf("\n\n\nPress enter to continue...");
+                printf("\n\n\nPress enter to continue...\n");
 				fflush(stdout);
 				getchar(); 
 				break;
 			case 2:
 				AStar(initial);
-				printf("\n\n\nPress enter to continue...");
+				printf("\n\n\nPress enter to continue...\n");
 				getchar(); 
                 fflush(stdout);
 				break;
@@ -425,4 +427,3 @@ int main() {
 
 return 0;
 }
-
