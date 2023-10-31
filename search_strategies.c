@@ -315,13 +315,21 @@ PuzzleState configureBoard(PuzzleState state){
     printf("\nEnter 0-15 numbers (with spaces) to fill the board:\n");
     
     //nested loops to iterate over each row and column of the board.
-    for (i = 0; i < 4; i++) 
-    {
-        for (j = 0; j < 4; j++) 
-        {
-            //read and store the user's input into the corresponding cell of the board.
-            scanf("%d", &state.board[i][j]);
-        }
+    for (i = 0; i < 4; i++) {
+        for (j = 0; j < 4; j++) {
+             int input;
+
+            do { // Prompt the user for input until a unique, valid number is entered
+                scanf("%d", &input);
+
+                if (input < 0 || input > 15 || isUnique[input]) {
+                    printf("\nError: Invalid input or a repeated number. Please try again.\n");
+                }
+            } while (input < 0 || input > 15 || isUnique[input]);
+
+            state.board[i][j] = input;
+            isUnique[input] = true;   
+        } 
     }
 
     //clear the screen (works for both Windows and Linux).
